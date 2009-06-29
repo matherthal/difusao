@@ -24,21 +24,7 @@ float f(float x)
 		return(0.0);
 }
 
-/*float gx0(float t, int )
-{
-	return(10.0);
-}
-
-float gxfim(float t)
-{
-	return(20.0);
-}*/
-
-/*float f(float x);
-float gx0(float t);
-float gxfim(float t);*/
-
-int main(void)
+void difusao_explicito()
 {
 	FILE *outf;
 
@@ -143,4 +129,87 @@ int main(void)
 		x += k;
 	}
 
+}
+
+void difusao_implicito()
+{
+	FILE *outf;
+
+	float matriz_phi[50][50], // matriz_phi guarda a matriz tridiagonal dos coeficientes     (matriz A)
+		igualdade[50], //a matriz igualdade guarda os phi(i,j)    (matriz b)
+		solucao[50], //solucao é a matriz que guarda os phi(i+1,j)     (matriz X da equação: A*X = b)
+		t, t0, tfim, x, x0, xfim, h, k, alfa, lambda;
+
+	int i, j, nx, nt;
+
+	if ((outf = fopen("difusao_i.dat", "w")) == NULL)
+	{
+		printf("\nProblemas na abertura do arquivo\n");
+	}
+
+	h = 0.001; 	/* Discretizacao do tempo */
+
+	k = 1.0/6.0;  	/* Discretizacao do espaco */
+	fprintf(stdout, " k = %f", k);
+
+	t0   = 0.0;
+	tfim = 0.004;
+
+	x0   = 0.0;
+	xfim = 1.0;
+
+	nt = (int) ((tfim - t0)/h);
+	nx = (int) ((xfim - x0)/k);
+
+	fprintf(stdout, "\n Numero de intervalos temporais %d e espaciais %d", nt, nx);
+
+	/* Parametros fisicos e variavel auxiliar */
+
+	alfa = 1.0;
+
+	lambda = alfa * h/(k * k);
+	fprintf(stdout, "\n lambda(k*k) = %f",lambda);
+
+	/* Condicao inicial*/
+	for (j = 0; j < nx - 1; j++)
+	{
+		igualdade[j] = f(x);
+		/*fprintf(stdout, "\n matriz_phi[0][%d] = %f", j, matriz_phi[0][j]);*/
+
+		x += k;
+	}
+	igualdade[nx - 1] += lambda*k;
+
+	/* Condicao de contorno */
+	for (i = 0; i < nx - 1; i++)
+	{
+		fprintf(stdout, "\n i = %d",i);
+		t += h;
+
+		for (j = 0; j < nx - 1; j++)
+		{
+			if (j==i)
+				matriz_phi[i][j] = (1.0 + 2.0 * lambda);
+			else if ((j==(i+1)) || (j==(i-1)))
+				matriz_phi[i][j] = lambda;
+			else
+				matriz_phi[i][j] = 0.0;
+		}
+
+		matriz_phi[0][0] -= lambda;
+		matriz_phi[nx - 1][nx - 1] -= lambda;
+	}
+
+	x = x0;
+
+	for (j = 0; j < nx; j++)
+	{
+		fprintf(outf, "%f ", x);
+		for (i = 0; i < nt; i++)
+		{
+			fprintf(outf, "%f ", matriz_phi[i][j]);
+		}
+		fprintf(outf, "\n");
+		x += k;
+	}
 }
